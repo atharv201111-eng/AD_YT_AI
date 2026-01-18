@@ -176,6 +176,39 @@ async function fetchSheetData() {
   }
   }
 
+  document.getElementById("checkResultBtn").addEventListener("click", async function() {
+  const userId = document.getElementById("checkUserId").value.trim();
+  const resultDiv = document.getElementById("result");
+  
+  if (!userId) {
+    resultDiv.innerText = "Please enter your User ID.";
+    return;
+  }
+
+  resultDiv.innerText = "Fetching result...";
+
+  const allData = await fetchSheetData();
+  if (!allData) {
+    resultDiv.innerText = "Error fetching sheet data.";
+    return;
+  }
+
+  const userData = allData.find(row => row.user_id === userId);
+
+  if (userData) {
+    resultDiv.innerHTML = `
+      <b>Topic:</b> ${userData.topic} <br>
+      <b>Video Type:</b> ${userData.video_type} <br>
+      <b>Tone:</b> ${userData.tone} <br>
+      <b>Script:</b> ${userData.script || "Not ready"} <br>
+      <b>Voiceover Script:</b> ${userData.voiceover_script || "Not ready"} <br>
+      <b>Image Prompt:</b> ${userData.image_prompt || "N/A"} <br>
+      <b>Status:</b> ${userData.status || "Pending"}
+    `;
+  } else {
+    resultDiv.innerText = "No result found for this User ID.";
+  }
+});
 </script>
 
 </body>
