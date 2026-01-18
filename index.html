@@ -1,133 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Video Script Generator</title>
-
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  .container {
-    background: #111;
-    padding: 25px;
-    width: 100%;
-    max-width: 420px;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-  }
-
-  h1 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  label {
-    font-size: 14px;
-    margin-top: 12px;
-    display: block;
-  }
-
-  input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
-  }
-
-  button {
-    width: 100%;
-    margin-top: 20px;
-    padding: 12px;
-    background: #00c6ff;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background: #009edc;
-  }
-
-  .status {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 14px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>AD YT AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
+  <h1>AD YT AI – Video Script Generator</h1>
 
-<div class="container">
-  <h1>AI Video Generator</h1>
+  <form id="aiForm">
+    <label>Video Topic</label><br>
+    <input type="text" id="topic" required><br><br>
 
-  <form id="videoForm">
-
-    <label>Topic</label>
-    <input name="Topic" required placeholder="Enter video topic">
-
-    <label>Video Type</label>
-    <select name="Video_Type" required>
+    <label>Video Type</label><br>
+    <select id="videoType">
       <option value="Short">Short</option>
       <option value="Long">Long</option>
-    </select>
+    </select><br><br>
 
-    <label>Tone</label>
-    <input name="Tone" placeholder="Friendly, Professional, etc">
+    <label>Tone</label><br>
+    <select id="tone">
+      <option value="Friendly">Friendly</option>
+      <option value="Professional">Professional</option>
+      <option value="Energetic">Energetic</option>
+    </select><br><br>
 
-    <label>Generate Image?</label>
-    <select name="Generate_Image">
+    <label>Generate Images?</label><br>
+    <select id="generateImage">
       <option value="Yes">Yes</option>
       <option value="No">No</option>
-    </select>
+    </select><br><br>
 
-    <label>Number of Images</label>
-    <input type="number" name="Number_of_Images" min="1" max="5">
+    <label>Number of Images</label><br>
+    <input type="number" id="imageCount" min="1" max="10" value="3"><br><br>
 
     <button type="submit">Generate</button>
   </form>
 
-  <div class="status" id="status"></div>
-</div>
+  <p id="status"></p>
 
-<script>
-const form = document.getElementById("videoForm");
-const status = document.getElementById("status");
+  <script>
+    document.getElementById("aiForm").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-form.addEventListener("submit", function(e) {
-  e.preventDefault();
-  status.textContent = "Sending request...";
+      document.getElementById("status").innerText = "Sending to AI...";
 
-  const data = Object.fromEntries(new FormData(form));
-
-  fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
-  .then(() => {
-    status.textContent = "✅ Request sent successfully!";
-    form.reset();
-  })
-  .catch(() => {
-    status.textContent = "❌ Error sending request";
-  });
-});
-</script>
-
+      fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: document.getElementById("topic").value,
+          video_type: document.getElementById("videoType").value,
+          tone: document.getElementById("tone").value,
+          generate_image: document.getElementById("generateImage").value,
+          image_count: document.getElementById("imageCount").value,
+          user_id: "web_user_001"
+        })
+      })
+      .then(res => res.text())
+      .then(() => {
+        document.getElementById("status").innerText = "Request sent successfully ✅";
+      })
+      .catch(() => {
+        document.getElementById("status").innerText = "Error sending request ❌";
+      });
+    });
+  </script>
 </body>
 </html>
