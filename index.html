@@ -116,6 +116,9 @@
 
 <script>
 
+  function generateUserId() {
+  return 'user_' + Math.floor(Math.random() * 1000000); // Generates a random 6-digit ID
+  }
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
