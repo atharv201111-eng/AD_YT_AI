@@ -105,28 +105,32 @@
 </div>
 
 <script>
-const form = document.getElementById("videoForm");
-const status = document.getElementById("status");
 
-form.addEventListener("submit", function(e) {
+document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
-  status.textContent = "Sending request...";
 
-  const data = Object.fromEntries(new FormData(form));
+  document.getElementById("status").innerText = "Sending to AI...";
 
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
-  .then(() => {
-    status.textContent = "✅ Request sent successfully!";
-    form.reset();
-  })
-  .catch(() => {
-    status.textContent = "❌ Error sending request";
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      topic: document.getElementById("topic").value,
+      video_type: document.getElementById("videoType").value,
+      tone: document.getElementById("tone").value,
+      generate_image: document.getElementById("generateImage").value,
+      image_count: document.getElementById("imageCount").value,
+      user_id: "web_user_001"
+    })
   });
+
+  document.getElementById("status").innerText =
+    "Request sent successfully ✅";
 });
+
 </script>
 
 </body>
