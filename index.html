@@ -75,75 +75,51 @@
 <div class="container">
   <h1>AI Video Generator</h1>
 
-  
+  <form id="aiForm">
 
-    <form id="aiForm">
+    <label>Topic</label>
+    <input id="topic" required placeholder="Enter video topic">
 
-  <label>Topic</label>
-  <input id="topic" name="Topic" required placeholder="Enter video topic">
+    <label>Video Type</label>
+    <select id="videoType" required>
+      <option value="Short">Short</option>
+      <option value="Long">Long</option>
+    </select>
 
-  <label>Video Type</label>
-  <select id="videoType" name="Video_Type" required>
-    <option value="Short">Short</option>
-    <option value="Long">Long</option>
-  </select>
+    <label>Tone</label>
+    <input id="tone" placeholder="Friendly, Professional, etc">
 
-  <label>Tone</label>
-  <input id="tone" name="Tone" placeholder="Friendly, Professional, etc">
+    <label>Generate Image?</label>
+    <select id="generateImage">
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
 
-  <label>Generate Image?</label>
-  <select id="generateImage" name="Generate_Image">
-    <option value="Yes">Yes</option>
-    <option value="No">No</option>
-  </select>
+    <label>Number of Images</label>
+    <input id="imageCount" type="number" min="1" max="5">
 
-  <label>Number of Images</label>
-  <input id="imageCount" type="number" name="Number_of_Images" min="1" max="5">
-
-  <button type="submit">Generate</button>
-    <div id="userIdDisplay" style="margin-top:10px; color:#00ffcc; font-weight:bold;">
-  Your User ID will appear here
-    </div>
+    <button type="submit">Generate</button>
   </form>
-  <div id="userIdDisplay" style="margin-top:10px; color:#00ffcc; font-weight:bold;"></div>
-<hr style="margin:20px 0; border-color:#444;">
 
-<h2>Check Your AI Result</h2>
-<label>Enter your User ID:</label>
-<input id="checkUserId" placeholder="web_user_001">
-<button id="checkResultBtn">Check Result</button>
-
-<div id="result" style="margin-top:15px; font-size:14px;"></div>
   <div class="status" id="status"></div>
 </div>
 
 <script>
-
-  function generateUserId() {
-  return 'user_' + Math.floor(Math.random() * 1000000); // Generates a random 6-digit ID
-  }
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
   const statusEl = document.getElementById("status");
-  const userIdDisplay = document.getElementById("userIdDisplay");
+  statusEl.innerText = "Sending to AI...";
 
-  // Generate unique User ID
-  const userId = 'user_' + Math.floor(Math.random() * 1000000);
-
-  // Build payload
   const payload = {
     topic: document.getElementById("topic").value,
     video_type: document.getElementById("videoType").value,
     tone: document.getElementById("tone").value,
     generate_image: document.getElementById("generateImage").value,
     image_count: document.getElementById("imageCount").value,
-    user_id: userId
+    user_id: "TEMP_USER"
   };
 
-  console.log("Sending payload:", payload); // For debugging
-
-  // Send to Zapier
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
     method: "POST",
     mode: "no-cors",
@@ -151,79 +127,8 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
     body: JSON.stringify(payload)
   });
 
-  // Show success + user ID
   statusEl.innerText = "Request sent successfully ✅";
-  userIdDisplay.innerText = "Your User ID: " + userId;
 });
-
-const sheetURL = "https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
-
-async function fetchSheetData() {
-  try {
-    const response = await fetch(sheetURL);
-    const data = await response.json();
-
-    const entries = data.feed.entry;
-    const results = entries.map(item => ({
-      topic: item.gsx$topic.$t,
-      video_type: item.gsx$videotype.$t,
-      tone: item.gsx$tone.$t,
-      generate_image: item.gsx$generateimage.$t,
-      image_count: item.gsx$numberofimages.$t,
-      user_id: item.gsx$userid.$t,
-      timestamp: item.gsx$timestamp.$t,
-      status: item.gsx$status.$t
-    }));
-
-    console.log(results); // Check in browser console
-    return results;
-
-  } catch (err) {
-    console.error("Error fetching sheet data:", err);
-  }
-  }
-
-  document.getElementById("checkResultBtn").addEventListener("click", async function() {
-  const userId = document.getElementById("checkUserId").value.trim();
-  const resultDiv = document.getElementById("result");
-  
-  if (!userId) {
-    resultDiv.innerText = "Please enter your User ID.";
-    return;
-  }
-
-  resultDiv.innerText = "Fetching result...";
-
-  const allData = await fetchSheetData();
-  if (!allData) {
-    resultDiv.innerText = "Error fetching sheet data.";
-    return;
-  }
-
-  const userData = allData.find(row => row.user_id === userId);
-
-  if (userData) {
-    resultDiv.innerHTML = `
-      <b>Topic:</b> ${userData.topic} <br>
-      <b>Video Type:</b> ${userData.video_type} <br>
-      <b>Tone:</b> ${userData.tone} <br>
-      <b>Script:</b> ${userData.script || "Not ready"} <br>
-      <b>Voiceover Script:</b> ${userData.voiceover_script || "Not ready"} <br>
-      <b>Image Prompt:</b> ${userData.image_prompt || "N/A"} <br>
-      <b>Status:</b> ${userData.status || "Pending"}
-    `;
-  } else {
-    resultDiv.innerText = "No result found for this User ID.";
-  }
-});
-
-  // Auto-refresh every 10 seconds
-setInterval(async () => {
-  const userIdInput = document.getElementById("checkUserId");
-  if (!userIdInput.value.trim()) return;
-
-  document.getElementById("checkResultBtn").click();
-}, 10000); // 10000 ms = 10 seconds
 </script>
 
 </body>
