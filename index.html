@@ -109,31 +109,39 @@
 
 <script>
 
-
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
-  document.getElementById("status").innerText = "Sending to AI...";
+  // Show status immediately
+  const statusEl = document.getElementById("status");
+  statusEl.innerText = "Sending to AI...";
 
+  // Build the payload
+  const payload = {
+    topic: document.getElementById("topic").value,
+    video_type: document.getElementById("videoType").value,
+    tone: document.getElementById("tone").value,
+    generate_image: document.getElementById("generateImage").value,
+    image_count: document.getElementById("imageCount").value,
+    user_id: "web_user_001"
+  };
+
+  console.log("Sending payload:", payload); // Debug
+
+  // Send to Zapier webhook
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
     method: "POST",
-    mode: "no-cors",
+    mode: "no-cors", // cannot read response
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      topic: document.getElementById("topic").value,
-      video_type: document.getElementById("videoType").value,
-      tone: document.getElementById("tone").value,
-      generate_image: document.getElementById("generateImage").value,
-      image_count: document.getElementById("imageCount").value,
-      user_id: "web_user_001"
-    })
+    body: JSON.stringify(payload)
   });
 
-  document.getElementById("status").innerText =
-    "Request sent successfully ✅";
+  // Immediately update status
+  statusEl.innerText = "Request sent successfully ✅ Check Zapier";
 });
+
 
 
 </script>
