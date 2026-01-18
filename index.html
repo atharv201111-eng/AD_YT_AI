@@ -149,7 +149,32 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
   statusEl.innerText = "Request sent successfully ✅ Check Zapier";
 });
 
+const sheetURL = "https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
 
+async function fetchSheetData() {
+  try {
+    const response = await fetch(sheetURL);
+    const data = await response.json();
+
+    const entries = data.feed.entry;
+    const results = entries.map(item => ({
+      topic: item.gsx$topic.$t,
+      video_type: item.gsx$videotype.$t,
+      tone: item.gsx$tone.$t,
+      generate_image: item.gsx$generateimage.$t,
+      image_count: item.gsx$numberofimages.$t,
+      user_id: item.gsx$userid.$t,
+      timestamp: item.gsx$timestamp.$t,
+      status: item.gsx$status.$t
+    }));
+
+    console.log(results); // Check in browser console
+    return results;
+
+  } catch (err) {
+    console.error("Error fetching sheet data:", err);
+  }
+  }
 
 </script>
 
