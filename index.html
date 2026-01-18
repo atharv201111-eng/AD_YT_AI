@@ -77,6 +77,23 @@
   <button onclick="signup()">Sign Up</button>
   <button onclick="login()">Login</button>
 </div>
+  <div id="loginBox" style="padding:20px; background:#222; border-radius:12px; width:100%; max-width:420px; margin:auto;">
+  <h2>Login / Signup</h2>
+
+  <label>Email:</label>
+  <input type="email" id="email" placeholder="Enter your email" required>
+
+  <label>Password:</label>
+  <div style="position:relative;">
+    <input type="password" id="password" placeholder="Enter password" required style="width:100%; padding-right:40px;">
+    <button type="button" id="togglePassword" style="position:absolute; right:5px; top:5px; background:none; border:none; color:#00c6ff; cursor:pointer;">👁️</button>
+  </div>
+
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Sign Up</button>
+  
+  <div id="loginReminder" style="color:#ff5555; margin-top:10px;">Please log in to use AI features.</div>
+  </div>
 <div class="container">
   <h1>AI Video Generator</h1>
 
@@ -130,7 +147,33 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+// Show/Hide password
+document.getElementById("togglePassword").addEventListener("click", function() {
+  const pwdField = document.getElementById("password");
+  if (pwdField.type === "password") {
+    pwdField.type = "text";
+    this.textContent = "🙈";
+  } else {
+    pwdField.type = "password";
+    this.textContent = "👁️";
+  }
+});
 
+// Reminder visibility based on login
+onAuthStateChanged(auth, user => {
+  const loginBox = document.getElementById("loginBox");
+  const aiContainer = document.querySelector(".container");
+  const reminder = document.getElementById("loginReminder");
+
+  if (user) {
+    loginBox.style.display = "none";
+    aiContainer.style.display = "block";
+  } else {
+    loginBox.style.display = "block";
+    aiContainer.style.display = "none";
+    reminder.style.display = "block"; // show reminder
+  }
+});
 // ========================
 // Signup Function
 // ========================
