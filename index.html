@@ -110,11 +110,78 @@
 </div>
 
 <script>
+<script type="module">
+// ========================
+// Firebase Setup
+// ========================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCwumS1PZH4aKpKBMhmDiNXMyp9zgPm0JY",
+  authDomain: "ai-video-generator-562af.firebaseapp.com",
+  projectId: "ai-video-generator-562af",
+  storageBucket: "ai-video-generator-562af.firebasestorage.app",
+  messagingSenderId: "299293689534",
+  appId: "1:299293689534:web:3a62b8233ff0b02401c0ef"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// ========================
+// Signup Function
+// ========================
+window.signup = function() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => alert("Account created successfully ✅"))
+    .catch(err => alert(err.message));
+};
+
+// ========================
+// Login Function
+// ========================
+window.login = function() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => alert("Logged in successfully ✅"))
+    .catch(err => alert(err.message));
+};
+
+// ========================
+// Show/Hide Login & AI Form
+// ========================
+onAuthStateChanged(auth, user => {
+  const loginBox = document.getElementById("loginBox");
+  const aiContainer = document.querySelector(".container");
+
+  if (user) {
+    loginBox.style.display = "none";
+    aiContainer.style.display = "block";
+  } else {
+    loginBox.style.display = "block";
+    aiContainer.style.display = "none";
+  }
+});
+
+// ========================
+// AI Form Submission
+// ========================
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
   const statusEl = document.getElementById("status");
   statusEl.innerText = "Sending to AI...";
+
+  const currentUser = auth.currentUser;
+  const userId = currentUser ? currentUser.uid : "TEMP_USER";
 
   const payload = {
     topic: document.getElementById("topic").value,
@@ -122,8 +189,11 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
     tone: document.getElementById("tone").value,
     generate_image: document.getElementById("generateImage").value,
     image_count: document.getElementById("imageCount").value,
-    user_id: "TEMP_USER"
+    user_id: userId
   };
+
+  console.log("Payload to AI:", payload);
+
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
     method: "POST",
     mode: "no-cors",
@@ -133,41 +203,83 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
 
   statusEl.innerText = "Request sent successfully ✅";
 });
-  <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCwumS1PZH4aKpKBMhmDiNXMyp9zgPm0JY",
-    authDomain: "ai-video-generator-562af.firebaseapp.com",
-    projectId: "ai-video-generator-562af",
-    storageBucket: "ai-video-generator-562af.firebasestorage.app",
-    messagingSenderId: "299293689534",
-    appId: "1:299293689534:web:3a62b8233ff0b02401c0ef"
-  };
+// ========================
+// Google Sheet Fetch & Display Results
+// ========================
+const sheetURL = "https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-window.signup = function () {
-  const email = email.value;
-  const password = password.value;
+async function fetchSheetData() {
+  try {
+    const response = await fetch(sheetURL);
+    const data = await response.json();
 
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => alert("Account created"))
-    .catch(err => alert(err.message));
-};
+    const entries = data.feed.entry;
+    const results = entries.map(item => ({
+      topic: item.gsx$topic.$t,
+      video_type: item.gsx$videotype.$t,
+      tone: item.gsx$tone.$t,
+      script: item.gsx$script?.$t || "Not ready",
+      voiceover_script: item.gsx$voiceoverscript?.$t || "Not ready",
+      image_prompt: item.gsx$imageprompt?.$t || "N/A",
+      generate_image: item.gsx$generateimage?.$t || "No",
+      image_count: item.gsx$numberofimages?.$t || 0,
+      user_id: item.gsx$userid.$t,
+      timestamp: item.gsx$timestamp.$t,
+      status: item.gsx$status?.$t || "Pending"
+    }));
 
-window.login = function () {
-  const email = email.value;
-  const password = password.value;
+    return results;
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => alert("Logged in"))
-    .catch(err => alert(err.message));
-};
+  } catch (err) {
+    console.error("Error fetching sheet data:", err);
+    return [];
+  }
+}
+
+// ========================
+// Check Result Button
+// ========================
+document.getElementById("checkResultBtn").addEventListener("click", async function() {
+  const userId = document.getElementById("checkUserId").value.trim();
+  const resultDiv = document.getElementById("result");
+
+  if (!userId) {
+    resultDiv.innerText = "Please enter your User ID.";
+    return;
+  }
+
+  resultDiv.innerText = "Fetching result...";
+
+  const allData = await fetchSheetData();
+  const userData = allData.find(row => row.user_id === userId);
+
+  if (userData) {
+    resultDiv.innerHTML = `
+      <b>Topic:</b> ${userData.topic} <br>
+      <b>Video Type:</b> ${userData.video_type} <br>
+      <b>Tone:</b> ${userData.tone} <br>
+      <b>Script:</b> ${userData.script} <br>
+      <b>Voiceover Script:</b> ${userData.voiceover_script} <br>
+      <b>Image Prompt:</b> ${userData.image_prompt} <br>
+      <b>Status:</b> ${userData.status}
+    `;
+  } else {
+    resultDiv.innerText = "No result found for this User ID.";
+  }
+});
+
+// ========================
+// Auto-refresh every 10s
+// ========================
+setInterval(() => {
+  const userIdInput = document.getElementById("checkUserId");
+  if (userIdInput.value.trim()) {
+    document.getElementById("checkResultBtn").click();
+  }
+}, 10000);
+
+
 </script>
 
 </body>
