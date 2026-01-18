@@ -4,137 +4,80 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Video Script Generator</title>
-
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  .container {
-    background: #111;
-    padding: 25px;
-    width: 100%;
-    max-width: 420px;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-  }
-
-  h1 {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  label {
-    font-size: 14px;
-    margin-top: 12px;
-    display: block;
-  }
-
-  input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
-  }
-
-  button {
-    width: 100%;
-    margin-top: 20px;
-    padding: 12px;
-    background: #00c6ff;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background: #009edc;
-  }
-
-  .status {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 14px;
-  }
+  body {margin:0;font-family:Arial;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;}
+  .container{background:#111;padding:25px;width:100%;max-width:600px;border-radius:12px;margin:30px auto;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
+  h1,h2{text-align:center;}
+  label{display:block;margin-top:10px;}
+  input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:none;outline:none;}
+  button{margin-top:10px;padding:12px;width:100%;border:none;border-radius:6px;background:#00c6ff;font-weight:bold;cursor:pointer;}
+  button:hover{background:#009edc;}
+  #chatBox{max-height:400px;overflow-y:auto;margin-top:15px;padding:10px;background:#222;border-radius:8px;}
+  .chatMessage{margin-bottom:10px;padding:8px;border-radius:6px;}
+  .user{background:#009edc;color:white;}
+  .ai{background:#444;color:white;}
+  .editable{background:#333;padding:5px;border-radius:4px;margin:5px 0;}
+  #imageContainer{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px;}
+  #imageContainer img{max-width:100px;border-radius:8px;}
+  #logoutBtn{background:#ff5555;}
 </style>
 </head>
-
 <body>
-<div id="loginBox">
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  <button onclick="signup()">Sign Up</button>
-  <button onclick="login()">Login</button>
-</div>
-  <div id="loginBox" style="padding:20px; background:#222; border-radius:12px; width:100%; max-width:420px; margin:auto;">
+
+<!-- LOGIN BOX -->
+<div id="loginBox" class="container">
   <h2>Login / Signup</h2>
-
   <label>Email:</label>
-  <input type="email" id="email" placeholder="Enter your email" required>
-
+  <input type="email" id="email" placeholder="Enter email">
   <label>Password:</label>
   <div style="position:relative;">
-    <input type="password" id="password" placeholder="Enter password" required style="width:100%; padding-right:40px;">
+    <input type="password" id="password" placeholder="Enter password" style="width:100%; padding-right:40px;">
     <button type="button" id="togglePassword" style="position:absolute; right:5px; top:5px; background:none; border:none; color:#00c6ff; cursor:pointer;">👁️</button>
   </div>
-
   <button onclick="login()">Login</button>
   <button onclick="signup()">Sign Up</button>
-  
   <div id="loginReminder" style="color:#ff5555; margin-top:10px;">Please log in to use AI features.</div>
-  </div>
-<div class="container">
+</div>
+
+<!-- MAIN AI CONTAINER -->
+<div id="mainContainer" class="container" style="display:none;">
   <h1>AI Video Generator</h1>
-
+  
+  <!-- FORM -->
   <form id="aiForm">
-
     <label>Topic</label>
-    <input id="topic" required placeholder="Enter video topic">
-
+    <input id="topic" placeholder="Enter video topic" required>
     <label>Video Type</label>
-    <select id="videoType" required>
+    <select id="videoType">
       <option value="Short">Short</option>
       <option value="Long">Long</option>
     </select>
-
     <label>Tone</label>
     <input id="tone" placeholder="Friendly, Professional, etc">
-
     <label>Generate Image?</label>
     <select id="generateImage">
       <option value="Yes">Yes</option>
       <option value="No">No</option>
     </select>
-
     <label>Number of Images</label>
-    <input id="imageCount" type="number" min="1" max="5">
-
-    <button type="submit">Generate</button>
+    <input id="imageCount" type="number" min="1" max="5" value="1">
+    <button type="submit">Generate All</button>
   </form>
+  
+  <button id="logoutBtn" onclick="logout()">Logout</button>
 
-  <div class="status" id="status"></div>
+  <!-- CHAT AREA -->
+  <div id="chatBox"></div>
+
+  <!-- IMAGE DISPLAY -->
+  <div id="imageContainer"></div>
 </div>
 
-<script>
 <script type="module">
-// ========================
-// Firebase Setup
-// ========================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-// Firebase configuration
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCwumS1PZH4aKpKBMhmDiNXMyp9zgPm0JY",
   authDomain: "ai-video-generator-562af.firebaseapp.com",
@@ -143,91 +86,66 @@ const firebaseConfig = {
   messagingSenderId: "299293689534",
   appId: "1:299293689534:web:3a62b8233ff0b02401c0ef"
 };
-
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
 // Show/Hide password
-document.getElementById("togglePassword").addEventListener("click", function() {
-  const pwdField = document.getElementById("password");
-  if (pwdField.type === "password") {
-    pwdField.type = "text";
-    this.textContent = "🙈";
-  } else {
-    pwdField.type = "password";
-    this.textContent = "👁️";
-  }
+document.getElementById("togglePassword").addEventListener("click", ()=>{
+  const pwd = document.getElementById("password");
+  pwd.type = pwd.type==="password"?"text":"password";
 });
 
-// Reminder visibility based on login
-onAuthStateChanged(auth, user => {
-  const loginBox = document.getElementById("loginBox");
-  const aiContainer = document.querySelector(".container");
-  const reminder = document.getElementById("loginReminder");
-
-  if (user) {
-    loginBox.style.display = "none";
-    aiContainer.style.display = "block";
-  } else {
-    loginBox.style.display = "block";
-    aiContainer.style.display = "none";
-    reminder.style.display = "block"; // show reminder
-  }
-});
-// ========================
-// Signup Function
-// ========================
-window.signup = function() {
+// Signup
+window.signup = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-
-  createUserWithEmailAndPassword(auth, email, password)
-    .then(() => alert("Account created successfully ✅"))
-    .catch(err => alert(err.message));
+  createUserWithEmailAndPassword(auth,email,password)
+  .then(()=>alert("Account created ✅"))
+  .catch(err=>alert(err.message));
 };
 
-// ========================
-// Login Function
-// ========================
-window.login = function() {
+// Login
+window.login = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => alert("Logged in successfully ✅"))
-    .catch(err => alert(err.message));
+  signInWithEmailAndPassword(auth,email,password)
+  .then(()=>alert("Logged in ✅"))
+  .catch(err=>alert(err.message));
 };
 
-// ========================
-// Show/Hide Login & AI Form
-// ========================
-onAuthStateChanged(auth, user => {
-  const loginBox = document.getElementById("loginBox");
-  const aiContainer = document.querySelector(".container");
+// Logout
+window.logout = () => { signOut(auth).then(()=>alert("Logged out ✅")); };
 
-  if (user) {
-    loginBox.style.display = "none";
-    aiContainer.style.display = "block";
-  } else {
-    loginBox.style.display = "block";
-    aiContainer.style.display = "none";
-  }
+// Monitor login
+onAuthStateChanged(auth, user=>{
+  const loginBox = document.getElementById("loginBox");
+  const mainContainer = document.getElementById("mainContainer");
+  loginBox.style.display = user?"none":"block";
+  mainContainer.style.display = user?"block":"none";
 });
 
-// ========================
-// AI Form Submission
-// ========================
-document.getElementById("aiForm").addEventListener("submit", function(e) {
+// CHAT
+const chatBox = document.getElementById("chatBox");
+const imageContainer = document.getElementById("imageContainer");
+function addChatMessage(type,text,editable=false,key=""){
+  const div = document.createElement("div");
+  div.className="chatMessage "+type;
+  if(editable){
+    const ta = document.createElement("textarea");
+    ta.value=text;
+    ta.className="editable";
+    ta.onblur = () => { updateSheet(key, ta.value); addChatMessage("ai",`Updated ${key} ✅`); };
+    div.appendChild(ta);
+  } else div.textContent=text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop=chatBox.scrollHeight;
+}
+
+// FORM SUBMISSION
+document.getElementById("aiForm").addEventListener("submit", async e=>{
   e.preventDefault();
-
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    alert("⚠️ Please log in first to use this feature.");
-    return; // Stop submission if not logged in
-  }
-
-  const statusEl = document.getElementById("status");
-  statusEl.innerText = "Sending to AI...";
+  const user = auth.currentUser;
+  if(!user){alert("⚠️ Login first!"); return;}
 
   const payload = {
     topic: document.getElementById("topic").value,
@@ -235,102 +153,61 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
     tone: document.getElementById("tone").value,
     generate_image: document.getElementById("generateImage").value,
     image_count: document.getElementById("imageCount").value,
-    user_id: currentUser.uid
+    user_id: user.uid
   };
 
-  console.log("Payload to AI:", payload);
+  addChatMessage("user", `Submitted: ${payload.topic}`);
+  addChatMessage("ai","Generating your content...");
 
-  fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+  // Auto-send to Zapier
+  fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
+    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
   });
 
-  statusEl.innerText = "Request sent successfully ✅";
+  // FREE AI IMAGE GENERATION (Craiyon)
+  if(payload.generate_image==="Yes"){
+    imageContainer.innerHTML="";
+    for(let i=0;i<parseInt(payload.image_count);i++){
+      const img = document.createElement("img");
+      img.src=`https://api.craiyon.com/generate?prompt=${encodeURIComponent(payload.topic+" "+payload.tone)}&num_images=1`;
+      imageContainer.appendChild(img);
+    }
+  }
 });
 
-// ========================
-// Google Sheet Fetch & Display Results
-// ========================
-const sheetURL = "https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
-
-async function fetchSheetData() {
-  try {
-    const response = await fetch(sheetURL);
-    const data = await response.json();
-
-    const entries = data.feed.entry;
-    const results = entries.map(item => ({
-      topic: item.gsx$topic.$t,
-      video_type: item.gsx$videotype.$t,
-      tone: item.gsx$tone.$t,
-      script: item.gsx$script?.$t || "Not ready",
-      voiceover_script: item.gsx$voiceoverscript?.$t || "Not ready",
-      image_prompt: item.gsx$imageprompt?.$t || "N/A",
-      generate_image: item.gsx$generateimage?.$t || "No",
-      image_count: item.gsx$numberofimages?.$t || 0,
-      user_id: item.gsx$userid.$t,
-      timestamp: item.gsx$timestamp.$t,
-      status: item.gsx$status?.$t || "Pending"
-    }));
-
-    return results;
-
-  } catch (err) {
-    console.error("Error fetching sheet data:", err);
-    return [];
-  }
+// FETCH SHEET DATA
+const sheetURL="https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
+async function fetchSheetData(){
+  try{const res=await fetch(sheetURL); const data=await res.json();
+    return data.feed.entry.map(item=>({topic:item.gsx$topic.$t,video_type:item.gsx$videotype.$t,tone:item.gsx$tone.$t,script:item.gsx$script?.$t||"",voiceover:item.gsx$voiceoverscript?.$t||"",thumbnail:item.gsx$thumbnail?.$t||"",image_prompt:item.gsx$imageprompt?.$t||"",user_id:item.gsx$userid.$t}));}
+  catch(e){console.error(e); return [];}
 }
 
-// ========================
-// Check Result Button
-// ========================
-document.getElementById("checkResultBtn").addEventListener("click", async function() {
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    alert("⚠️ Please log in first to use this feature.");
-    return;
-  }
+// UPDATE SHEET
+function updateSheet(field,value){
+  const user = auth.currentUser;
+  if(!user) return;
+  fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
+    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.uid, field, value})
+  });
+}
 
-  const userId = currentUser.uid;
-  const resultDiv = document.getElementById("result");
-
-  resultDiv.innerText = "Fetching result...";
-
+// AUTO-REFRESH CHAT
+setInterval(async()=>{
+  const user = auth.currentUser;
+  if(!user) return;
   const allData = await fetchSheetData();
-  const userData = allData.find(row => row.user_id === userId);
-
-  if (userData) {
-    resultDiv.innerHTML = `
-      <b>Topic:</b> ${userData.topic} <br>
-      <b>Video Type:</b> ${userData.video_type} <br>
-      <b>Tone:</b> ${userData.tone} <br>
-      <b>Script:</b> ${userData.script} <br>
-      <b>Voiceover Script:</b> ${userData.voiceover_script} <br>
-      <b>Image Prompt:</b> ${userData.image_prompt} <br>
-      <b>Status:</b> ${userData.status}
-    `;
-  } else {
-    resultDiv.innerText = "No result found for your account.";
+  const userData = allData.find(d=>d.user_id===user.uid);
+  if(userData){
+    chatBox.innerHTML="";
+    addChatMessage("ai",`Title: ${userData.topic}`,true,"topic");
+    addChatMessage("ai",`Description: ${userData.tone}`,true,"tone");
+    addChatMessage("ai",`Script: ${userData.script}`,true,"script");
+    addChatMessage("ai",`Voiceover: ${userData.voiceover}`,true,"voiceover");
+    addChatMessage("ai",`Thumbnail Prompt: ${userData.thumbnail}`,true,"thumbnail");
+    addChatMessage("ai",`Image Prompt: ${userData.image_prompt}`,true,"image_prompt");
   }
-});
-
-// ========================
-// Auto-refresh every 10s
-// ========================
-setInterval(() => {
-  const currentUser = auth.currentUser;
-  if (!currentUser) return; // Only refresh if logged in
-  document.getElementById("checkResultBtn").click();
-}, 10000);
-
-
-        
-
-
-
+},10000);
 </script>
-
 </body>
 </html>
