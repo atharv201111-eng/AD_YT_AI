@@ -209,6 +209,14 @@ async function fetchSheetData() {
     resultDiv.innerText = "No result found for this User ID.";
   }
 });
+
+  // Auto-refresh every 10 seconds
+setInterval(async () => {
+  const userIdInput = document.getElementById("checkUserId");
+  if (!userIdInput.value.trim()) return;
+
+  document.getElementById("checkResultBtn").click();
+}, 10000); // 10000 ms = 10 seconds
 </script>
 
 </body>
