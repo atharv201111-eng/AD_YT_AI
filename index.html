@@ -177,11 +177,14 @@ onAuthStateChanged(auth, user => {
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    alert("⚠️ Please log in first to use this feature.");
+    return; // Stop submission if not logged in
+  }
+
   const statusEl = document.getElementById("status");
   statusEl.innerText = "Sending to AI...";
-
-  const currentUser = auth.currentUser;
-  const userId = currentUser ? currentUser.uid : "TEMP_USER";
 
   const payload = {
     topic: document.getElementById("topic").value,
@@ -189,7 +192,7 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
     tone: document.getElementById("tone").value,
     generate_image: document.getElementById("generateImage").value,
     image_count: document.getElementById("imageCount").value,
-    user_id: userId
+    user_id: currentUser.uid
   };
 
   console.log("Payload to AI:", payload);
@@ -241,13 +244,14 @@ async function fetchSheetData() {
 // Check Result Button
 // ========================
 document.getElementById("checkResultBtn").addEventListener("click", async function() {
-  const userId = document.getElementById("checkUserId").value.trim();
-  const resultDiv = document.getElementById("result");
-
-  if (!userId) {
-    resultDiv.innerText = "Please enter your User ID.";
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    alert("⚠️ Please log in first to use this feature.");
     return;
   }
+
+  const userId = currentUser.uid;
+  const resultDiv = document.getElementById("result");
 
   resultDiv.innerText = "Fetching result...";
 
@@ -265,7 +269,7 @@ document.getElementById("checkResultBtn").addEventListener("click", async functi
       <b>Status:</b> ${userData.status}
     `;
   } else {
-    resultDiv.innerText = "No result found for this User ID.";
+    resultDiv.innerText = "No result found for your account.";
   }
 });
 
@@ -273,11 +277,14 @@ document.getElementById("checkResultBtn").addEventListener("click", async functi
 // Auto-refresh every 10s
 // ========================
 setInterval(() => {
-  const userIdInput = document.getElementById("checkUserId");
-  if (userIdInput.value.trim()) {
-    document.getElementById("checkResultBtn").click();
-  }
+  const currentUser = auth.currentUser;
+  if (!currentUser) return; // Only refresh if logged in
+  document.getElementById("checkResultBtn").click();
 }, 10000);
+
+
+        
+
 
 
 </script>
