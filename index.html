@@ -122,34 +122,35 @@
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
-  // Show status immediately
   const statusEl = document.getElementById("status");
-  statusEl.innerText = "Sending to AI...";
+  const userIdDisplay = document.getElementById("userIdDisplay");
 
-  // Build the payload
+  // Generate unique User ID
+  const userId = 'user_' + Math.floor(Math.random() * 1000000);
+
+  // Build payload
   const payload = {
     topic: document.getElementById("topic").value,
     video_type: document.getElementById("videoType").value,
     tone: document.getElementById("tone").value,
     generate_image: document.getElementById("generateImage").value,
     image_count: document.getElementById("imageCount").value,
-    user_id: "web_user_001"
+    user_id: userId
   };
 
-  console.log("Sending payload:", payload); // Debug
+  console.log("Sending payload:", payload); // For debugging
 
-  // Send to Zapier webhook
+  // Send to Zapier
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/", {
     method: "POST",
-    mode: "no-cors", // cannot read response
-    headers: {
-      "Content-Type": "application/json"
-    },
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
-  // Immediately update status
-  statusEl.innerText = "Request sent successfully ✅ Check Zapier";
+  // Show success + user ID
+  statusEl.innerText = "Request sent successfully ✅";
+  userIdDisplay.innerText = "Your User ID: " + userId;
 });
 
 const sheetURL = "https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
