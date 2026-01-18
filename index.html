@@ -75,36 +75,40 @@
 <div class="container">
   <h1>AI Video Generator</h1>
 
-  <form id="videoForm">
+  
 
-    <label>Topic</label>
-    <input name="Topic" required placeholder="Enter video topic">
+    <form id="aiForm">
 
-    <label>Video Type</label>
-    <select name="Video_Type" required>
-      <option value="Short">Short</option>
-      <option value="Long">Long</option>
-    </select>
+  <label>Topic</label>
+  <input id="topic" name="Topic" required placeholder="Enter video topic">
 
-    <label>Tone</label>
-    <input name="Tone" placeholder="Friendly, Professional, etc">
+  <label>Video Type</label>
+  <select id="videoType" name="Video_Type" required>
+    <option value="Short">Short</option>
+    <option value="Long">Long</option>
+  </select>
 
-    <label>Generate Image?</label>
-    <select name="Generate_Image">
-      <option value="Yes">Yes</option>
-      <option value="No">No</option>
-    </select>
+  <label>Tone</label>
+  <input id="tone" name="Tone" placeholder="Friendly, Professional, etc">
 
-    <label>Number of Images</label>
-    <input type="number" name="Number_of_Images" min="1" max="5">
+  <label>Generate Image?</label>
+  <select id="generateImage" name="Generate_Image">
+    <option value="Yes">Yes</option>
+    <option value="No">No</option>
+  </select>
 
-    <button type="submit">Generate</button>
+  <label>Number of Images</label>
+  <input id="imageCount" type="number" name="Number_of_Images" min="1" max="5">
+
+  <button type="submit">Generate</button>
+    
   </form>
 
   <div class="status" id="status"></div>
 </div>
 
 <script>
+
 
 document.getElementById("aiForm").addEventListener("submit", function(e) {
   e.preventDefault();
@@ -130,6 +134,7 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
   document.getElementById("status").innerText =
     "Request sent successfully ✅";
 });
+
 
 </script>
 
