@@ -151,7 +151,23 @@ document.getElementById("aiForm").addEventListener("submit", function(e) {
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
+window.signup = function () {
+  const email = email.value;
+  const password = password.value;
 
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => alert("Account created"))
+    .catch(err => alert(err.message));
+};
+
+window.login = function () {
+  const email = email.value;
+  const password = password.value;
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => alert("Logged in"))
+    .catch(err => alert(err.message));
+};
 </script>
 
 </body>
