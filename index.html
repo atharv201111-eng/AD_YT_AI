@@ -24,6 +24,7 @@ button:hover{background:#009edc;}
 </head>
 <body>
 
+<!-- LOGIN BOX -->
 <div id="loginBox" class="container">
   <h2>Login / Signup</h2>
   <label>Email:</label>
@@ -38,6 +39,7 @@ button:hover{background:#009edc;}
   <div id="loginReminder" style="color:#ff5555; margin-top:10px;">Please log in to use AI features.</div>
 </div>
 
+<!-- MAIN AI CONTAINER -->
 <div id="mainContainer" class="container" style="display:none;">
   <h1>AI Video Generator</h1>
   
@@ -82,11 +84,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Show/Hide password
 document.getElementById("togglePassword").addEventListener("click", ()=>{
   const pwd = document.getElementById("password");
   pwd.type = pwd.type==="password"?"text":"password";
 });
 
+// Signup/Login/Logout
 window.signup = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -101,6 +105,7 @@ window.login = () => {
 };
 window.logout = ()=>{ signOut(auth).then(()=>alert("Logged out ✅")); };
 
+// Monitor login
 onAuthStateChanged(auth,user=>{
   const loginBox = document.getElementById("loginBox");
   const mainContainer = document.getElementById("mainContainer");
@@ -108,6 +113,7 @@ onAuthStateChanged(auth,user=>{
   mainContainer.style.display = user?"block":"none";
 });
 
+// Chat & Images
 const chatBox = document.getElementById("chatBox");
 const imageContainer = document.getElementById("imageContainer");
 
@@ -125,7 +131,7 @@ function addChatMessage(type,text,editable=false,key=""){
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Update field (Zapier)
+// Update field to Zapier
 function updateField(key,value){
   const user = auth.currentUser;
   if(!user) return;
@@ -144,53 +150,32 @@ document.getElementById("aiForm").addEventListener("submit", async e=>{
   const topic = document.getElementById("topic").value;
   const videoType = document.getElementById("videoType").value;
   const tone = document.getElementById("tone").value||"Neutral";
-  const generateImage = document.getElementById("generateImage").value;
-  const imageCount = parseInt(document.getElementById("imageCount").value);
 
+  // Show generating message
+  chatBox.innerHTML="";
   addChatMessage("user","Submitted: "+topic);
   addChatMessage("ai","Generating content...");
 
-  // Send to Zapier
+  // Send request to Zapier (Sheet will process AI)
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
-    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
+    method:"POST",
+    mode:"no-cors",
+    headers:{"Content-Type":"application/json"},
     body:JSON.stringify({topic,video_type:videoType,tone,user_id:user.uid})
   });
 
-  // Generate content immediately
-  chatBox.innerHTML="";
-  const title = `AI Video Title for "${topic}"`;
-  const description = `This is a ${tone} ${videoType} video about ${topic}.`;
-  const script = `Here is the script for the video on "${topic}".`;
-  const voiceover = `Voiceover script: ${topic} explained in ${tone} tone.`;
-  const thumbnailPrompt = `${topic} thumbnail`;
-  const imagePrompt = `${topic} image`;
-
-  addChatMessage("ai","Title: "+title,true,"topic");
-  addChatMessage("ai","Description: "+description,true,"tone");
-  addChatMessage("ai","Script: "+script,true,"script");
-  addChatMessage("ai","Voiceover: "+voiceover,true,"voiceover");
-  addChatMessage("ai","Thumbnail Prompt: "+thumbnailPrompt,true,"thumbnail");
-  addChatMessage("ai","Image Prompt: "+imagePrompt,true,"image_prompt");
-
-  // Free images
+  // Clear previous images until real Sheet data appears
   imageContainer.innerHTML="";
-  if(generateImage==="Yes"){
-    for(let i=0;i<imageCount;i++){
-      const img=document.createElement("img");
-      img.src=`https://thispersondoesnotexist.com/image?random=${Math.random()}`;
-      imageContainer.appendChild(img);
-    }
-  }
 });
 
-// Optional: refresh every 10s from Sheet
-setInterval(async()=>{
+// Fetch Sheet and update chat automatically
+async function fetchSheetData(){
   const user = auth.currentUser;
   if(!user) return;
   try{
     const res = await fetch("https://spreadsheets.google.com/feeds/list/YOUR_SHEET_ID/od6/public/values?alt=json");
     const data = await res.json();
-    const allData = data.feed.entry.map(item=>({
+    return data.feed.entry.map(item=>({
       topic:item.gsx$topic.$t,
       video_type:item.gsx$videotype.$t,
       tone:item.gsx$tone.$t,
@@ -200,18 +185,37 @@ setInterval(async()=>{
       image_prompt:item.gsx$imageprompt?.$t||"",
       user_id:item.gsx$userid.$t
     }));
-    const userData = allData.find(d=>d.user_id===user.uid);
-    if(userData){
-      chatBox.innerHTML="";
-      addChatMessage("ai",`Topic: ${userData.topic}`,true,"topic");
-      addChatMessage("ai",`Video Type: ${userData.video_type}`,true,"video_type");
-      addChatMessage("ai",`Tone: ${userData.tone}`,true,"tone");
-      addChatMessage("ai",`Script: ${userData.script}`,true,"script");
-      addChatMessage("ai",`Voiceover: ${userData.voiceover}`,true,"voiceover");
-      addChatMessage("ai",`Thumbnail Prompt: ${userData.thumbnail}`,true,"thumbnail");
-      addChatMessage("ai",`Image Prompt: ${userData.image_prompt}`,true,"image_prompt");
+  }catch(e){console.error(e); return [];}
+}
+
+// Auto-refresh Sheet every 10s
+setInterval(async()=>{
+  const user = auth.currentUser;
+  if(!user) return;
+  const allData = await fetchSheetData();
+  const userData = allData.find(d=>d.user_id===user.uid);
+  if(userData){
+    chatBox.innerHTML="";
+    addChatMessage("ai",`Topic: ${userData.topic}`,true,"topic");
+    addChatMessage("ai",`Video Type: ${userData.video_type}`,true,"video_type");
+    addChatMessage("ai",`Tone: ${userData.tone}`,true,"tone");
+    addChatMessage("ai",`Script: ${userData.script}`,true,"script");
+    addChatMessage("ai",`Voiceover: ${userData.voiceover}`,true,"voiceover");
+    addChatMessage("ai",`Thumbnail Prompt: ${userData.thumbnail}`,true,"thumbnail");
+    addChatMessage("ai",`Image Prompt: ${userData.image_prompt}`,true,"image_prompt");
+
+    // Display images if generateImage = Yes
+    const generateImage = document.getElementById("generateImage").value;
+    const imageCount = parseInt(document.getElementById("imageCount").value);
+    imageContainer.innerHTML="";
+    if(generateImage==="Yes"){
+      for(let i=0;i<imageCount;i++){
+        const img=document.createElement("img");
+        img.src=`https://thispersondoesnotexist.com/image?random=${Math.random()}`;
+        imageContainer.appendChild(img);
+      }
     }
-  }catch(e){console.error(e);}
+  }
 },10000);
 </script>
 </body>
