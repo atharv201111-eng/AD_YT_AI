@@ -3,28 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Video Script Generator</title>
+<title>AI Video Generator</title>
 <style>
-  body {margin:0;font-family:Arial;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;}
-  .container{background:#111;padding:25px;width:100%;max-width:600px;border-radius:12px;margin:30px auto;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
-  h1,h2{text-align:center;}
-  label{display:block;margin-top:10px;}
-  input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:none;outline:none;background:#222;color:white;}
-  button{margin-top:10px;padding:12px;width:100%;border:none;border-radius:6px;background:#00c6ff;font-weight:bold;cursor:pointer;}
-  button:hover{background:#009edc;}
-  #chatBox{max-height:400px;overflow-y:auto;margin-top:15px;padding:10px;background:#222;border-radius:8px;}
-  .chatMessage{margin-bottom:10px;padding:8px;border-radius:6px;}
-  .user{background:#009edc;color:white;}
-  .ai{background:#444;color:white;}
-  .editable{background:#333;padding:5px;border-radius:4px;margin:5px 0;width:100%;color:white;border:none;}
-  #imageContainer{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px;}
-  #imageContainer img{max-width:100px;border-radius:8px;}
-  #logoutBtn{background:#ff5555;}
+body {margin:0;font-family:Arial;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:white;}
+.container{background:#111;padding:25px;width:100%;max-width:600px;border-radius:12px;margin:30px auto;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
+h1,h2{text-align:center;}
+label{display:block;margin-top:10px;}
+input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:none;outline:none;background:#222;color:white;}
+button{margin-top:10px;padding:12px;width:100%;border:none;border-radius:6px;background:#00c6ff;font-weight:bold;cursor:pointer;}
+button:hover{background:#009edc;}
+#chatBox{max-height:400px;overflow-y:auto;margin-top:15px;padding:10px;background:#222;border-radius:8px;}
+.chatMessage{margin-bottom:10px;padding:8px;border-radius:6px;}
+.user{background:#009edc;color:white;}
+.ai{background:#444;color:white;}
+.editable{background:#333;padding:5px;border-radius:4px;margin:5px 0;width:100%;color:white;border:none;}
+#imageContainer{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px;}
+#imageContainer img{max-width:100px;border-radius:8px;}
+#logoutBtn{background:#ff5555;}
 </style>
 </head>
 <body>
 
-<!-- LOGIN BOX -->
 <div id="loginBox" class="container">
   <h2>Login / Signup</h2>
   <label>Email:</label>
@@ -39,11 +38,9 @@
   <div id="loginReminder" style="color:#ff5555; margin-top:10px;">Please log in to use AI features.</div>
 </div>
 
-<!-- MAIN AI CONTAINER -->
 <div id="mainContainer" class="container" style="display:none;">
   <h1>AI Video Generator</h1>
   
-  <!-- FORM -->
   <form id="aiForm">
     <label>Topic</label>
     <input id="topic" placeholder="Enter video topic" required>
@@ -66,10 +63,7 @@
   
   <button id="logoutBtn" onclick="logout()">Logout</button>
 
-  <!-- CHAT AREA -->
   <div id="chatBox"></div>
-
-  <!-- IMAGE DISPLAY -->
   <div id="imageContainer"></div>
 </div>
 
@@ -77,7 +71,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCwumS1PZH4aKpKBMhmDiNXMyp9zgPm0JY",
   authDomain: "ai-video-generator-562af.firebaseapp.com",
@@ -89,136 +82,137 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Show/Hide password
 document.getElementById("togglePassword").addEventListener("click", ()=>{
   const pwd = document.getElementById("password");
   pwd.type = pwd.type==="password"?"text":"password";
 });
 
-// Signup
 window.signup = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  if(!email || !password){alert("Enter email and password"); return;}
-  createUserWithEmailAndPassword(auth,email,password)
-  .then(()=>alert("Account created ✅"))
-  .catch(err=>alert(err.message));
+  if(!email||!password){alert("Enter email and password");return;}
+  createUserWithEmailAndPassword(auth,email,password).then(()=>alert("Account created ✅")).catch(e=>alert(e.message));
 };
-
-// Login
 window.login = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  if(!email || !password){alert("Enter email and password"); return;}
-  signInWithEmailAndPassword(auth,email,password)
-  .then(()=>alert("Logged in ✅"))
-  .catch(err=>alert(err.message));
+  if(!email||!password){alert("Enter email and password");return;}
+  signInWithEmailAndPassword(auth,email,password).then(()=>alert("Logged in ✅")).catch(e=>alert(e.message));
 };
+window.logout = ()=>{ signOut(auth).then(()=>alert("Logged out ✅")); };
 
-// Logout
-window.logout = () => { 
-  signOut(auth).then(()=>alert("Logged out ✅")); 
-};
-
-// Monitor login
-onAuthStateChanged(auth, user=>{
+onAuthStateChanged(auth,user=>{
   const loginBox = document.getElementById("loginBox");
   const mainContainer = document.getElementById("mainContainer");
   loginBox.style.display = user?"none":"block";
   mainContainer.style.display = user?"block":"none";
 });
 
-// CHAT & IMAGE HANDLER
 const chatBox = document.getElementById("chatBox");
 const imageContainer = document.getElementById("imageContainer");
 
 function addChatMessage(type,text,editable=false,key=""){
-  const div = document.createElement("div");
+  const div=document.createElement("div");
   div.className="chatMessage "+type;
   if(editable){
-    const ta = document.createElement("textarea");
+    const ta=document.createElement("textarea");
     ta.value=text;
     ta.className="editable";
-    ta.onblur = ()=>{ updateField(key, ta.value); addChatMessage("ai",`Updated ${key} ✅`); };
+    ta.onblur=()=>{ updateField(key,ta.value); addChatMessage("ai",`Updated ${key} ✅`); };
     div.appendChild(ta);
   } else div.textContent=text;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Submit form
+// Update field (Zapier)
+function updateField(key,value){
+  const user = auth.currentUser;
+  if(!user) return;
+  fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
+    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({user_id:user.uid,key,value})
+  });
+}
+
+// Form submit
 document.getElementById("aiForm").addEventListener("submit", async e=>{
   e.preventDefault();
   const user = auth.currentUser;
   if(!user){alert("⚠️ Login first!"); return;}
 
-  const payload = {
-    topic: document.getElementById("topic").value,
-    video_type: document.getElementById("videoType").value,
-    tone: document.getElementById("tone").value,
-    generate_image: document.getElementById("generateImage").value,
-    image_count: document.getElementById("imageCount").value,
-    user_id: user.uid
-  };
+  const topic = document.getElementById("topic").value;
+  const videoType = document.getElementById("videoType").value;
+  const tone = document.getElementById("tone").value||"Neutral";
+  const generateImage = document.getElementById("generateImage").value;
+  const imageCount = parseInt(document.getElementById("imageCount").value);
 
-  addChatMessage("user",`Submitted: ${payload.topic}`);
+  addChatMessage("user","Submitted: "+topic);
   addChatMessage("ai","Generating content...");
 
-  // Zapier webhook
+  // Send to Zapier
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
-    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
+    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({topic,video_type:videoType,tone,user_id:user.uid})
   });
 
-  // Free AI image generation (Craiyon)
-  if(payload.generate_image==="Yes"){
-    imageContainer.innerHTML="";
-    for(let i=0;i<parseInt(payload.image_count);i++){
-      const img = document.createElement("img");
-      img.src=`https://api.craiyon.com/generate?prompt=${encodeURIComponent(payload.topic+" "+payload.tone)}&num_images=1`;
+  // Generate content immediately
+  chatBox.innerHTML="";
+  const title = `AI Video Title for "${topic}"`;
+  const description = `This is a ${tone} ${videoType} video about ${topic}.`;
+  const script = `Here is the script for the video on "${topic}".`;
+  const voiceover = `Voiceover script: ${topic} explained in ${tone} tone.`;
+  const thumbnailPrompt = `${topic} thumbnail`;
+  const imagePrompt = `${topic} image`;
+
+  addChatMessage("ai","Title: "+title,true,"topic");
+  addChatMessage("ai","Description: "+description,true,"tone");
+  addChatMessage("ai","Script: "+script,true,"script");
+  addChatMessage("ai","Voiceover: "+voiceover,true,"voiceover");
+  addChatMessage("ai","Thumbnail Prompt: "+thumbnailPrompt,true,"thumbnail");
+  addChatMessage("ai","Image Prompt: "+imagePrompt,true,"image_prompt");
+
+  // Free images
+  imageContainer.innerHTML="";
+  if(generateImage==="Yes"){
+    for(let i=0;i<imageCount;i++){
+      const img=document.createElement("img");
+      img.src=`https://thispersondoesnotexist.com/image?random=${Math.random()}`;
       imageContainer.appendChild(img);
     }
   }
 });
 
-// Update field (send to Zapier)
-function updateField(key,value){
-  const user = auth.currentUser;
-  if(!user) return;
-  fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
-    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.uid,key,value})
-  });
-}
-
-// Auto-refresh chat every 10s
+// Optional: refresh every 10s from Sheet
 setInterval(async()=>{
   const user = auth.currentUser;
   if(!user) return;
-  // Fetch latest data
-  const res = await fetch("https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json");
-  const data = await res.json();
-  const entries = data.feed.entry.map(item=>({
-    topic:item.gsx$topic.$t,
-    video_type:item.gsx$videotype.$t,
-    tone:item.gsx$tone.$t,
-    script:item.gsx$script?.$t||"",
-    voiceover:item.gsx$voiceoverscript?.$t||"",
-    thumbnail:item.gsx$thumbnail?.$t||"",
-    image_prompt:item.gsx$imageprompt?.$t||"",
-    user_id:item.gsx$userid.$t
-  }));
-  const userData = entries.find(d=>d.user_id===user.uid);
-  if(userData){
-    chatBox.innerHTML="";
-    addChatMessage("ai",`Topic: ${userData.topic}`,true,"topic");
-    addChatMessage("ai",`Video Type: ${userData.video_type}`,true,"video_type");
-    addChatMessage("ai",`Tone: ${userData.tone}`,true,"tone");
-    addChatMessage("ai",`Script: ${userData.script}`,true,"script");
-    addChatMessage("ai",`Voiceover: ${userData.voiceover}`,true,"voiceover");
-    addChatMessage("ai",`Thumbnail Prompt: ${userData.thumbnail}`,true,"thumbnail");
-    addChatMessage("ai",`Image Prompt: ${userData.image_prompt}`,true,"image_prompt");
-  }
+  try{
+    const res = await fetch("https://spreadsheets.google.com/feeds/list/YOUR_SHEET_ID/od6/public/values?alt=json");
+    const data = await res.json();
+    const allData = data.feed.entry.map(item=>({
+      topic:item.gsx$topic.$t,
+      video_type:item.gsx$videotype.$t,
+      tone:item.gsx$tone.$t,
+      script:item.gsx$script?.$t||"",
+      voiceover:item.gsx$voiceoverscript?.$t||"",
+      thumbnail:item.gsx$thumbnail?.$t||"",
+      image_prompt:item.gsx$imageprompt?.$t||"",
+      user_id:item.gsx$userid.$t
+    }));
+    const userData = allData.find(d=>d.user_id===user.uid);
+    if(userData){
+      chatBox.innerHTML="";
+      addChatMessage("ai",`Topic: ${userData.topic}`,true,"topic");
+      addChatMessage("ai",`Video Type: ${userData.video_type}`,true,"video_type");
+      addChatMessage("ai",`Tone: ${userData.tone}`,true,"tone");
+      addChatMessage("ai",`Script: ${userData.script}`,true,"script");
+      addChatMessage("ai",`Voiceover: ${userData.voiceover}`,true,"voiceover");
+      addChatMessage("ai",`Thumbnail Prompt: ${userData.thumbnail}`,true,"thumbnail");
+      addChatMessage("ai",`Image Prompt: ${userData.image_prompt}`,true,"image_prompt");
+    }
+  }catch(e){console.error(e);}
 },10000);
-
 </script>
 </body>
 </html>
