@@ -9,14 +9,14 @@
   .container{background:#111;padding:25px;width:100%;max-width:600px;border-radius:12px;margin:30px auto;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
   h1,h2{text-align:center;}
   label{display:block;margin-top:10px;}
-  input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:none;outline:none;}
+  input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:none;outline:none;background:#222;color:white;}
   button{margin-top:10px;padding:12px;width:100%;border:none;border-radius:6px;background:#00c6ff;font-weight:bold;cursor:pointer;}
   button:hover{background:#009edc;}
   #chatBox{max-height:400px;overflow-y:auto;margin-top:15px;padding:10px;background:#222;border-radius:8px;}
   .chatMessage{margin-bottom:10px;padding:8px;border-radius:6px;}
   .user{background:#009edc;color:white;}
   .ai{background:#444;color:white;}
-  .editable{background:#333;padding:5px;border-radius:4px;margin:5px 0;}
+  .editable{background:#333;padding:5px;border-radius:4px;margin:5px 0;width:100%;color:white;border:none;}
   #imageContainer{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px;}
   #imageContainer img{max-width:100px;border-radius:8px;}
   #logoutBtn{background:#ff5555;}
@@ -99,6 +99,7 @@ document.getElementById("togglePassword").addEventListener("click", ()=>{
 window.signup = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  if(!email || !password){alert("Enter email and password"); return;}
   createUserWithEmailAndPassword(auth,email,password)
   .then(()=>alert("Account created ✅"))
   .catch(err=>alert(err.message));
@@ -108,13 +109,16 @@ window.signup = () => {
 window.login = () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  if(!email || !password){alert("Enter email and password"); return;}
   signInWithEmailAndPassword(auth,email,password)
   .then(()=>alert("Logged in ✅"))
   .catch(err=>alert(err.message));
 };
 
 // Logout
-window.logout = () => { signOut(auth).then(()=>alert("Logged out ✅")); };
+window.logout = () => { 
+  signOut(auth).then(()=>alert("Logged out ✅")); 
+};
 
 // Monitor login
 onAuthStateChanged(auth, user=>{
@@ -124,9 +128,10 @@ onAuthStateChanged(auth, user=>{
   mainContainer.style.display = user?"block":"none";
 });
 
-// CHAT
+// CHAT & IMAGE HANDLER
 const chatBox = document.getElementById("chatBox");
 const imageContainer = document.getElementById("imageContainer");
+
 function addChatMessage(type,text,editable=false,key=""){
   const div = document.createElement("div");
   div.className="chatMessage "+type;
@@ -134,14 +139,14 @@ function addChatMessage(type,text,editable=false,key=""){
     const ta = document.createElement("textarea");
     ta.value=text;
     ta.className="editable";
-    ta.onblur = () => { updateSheet(key, ta.value); addChatMessage("ai",`Updated ${key} ✅`); };
+    ta.onblur = ()=>{ updateField(key, ta.value); addChatMessage("ai",`Updated ${key} ✅`); };
     div.appendChild(ta);
   } else div.textContent=text;
   chatBox.appendChild(div);
-  chatBox.scrollTop=chatBox.scrollHeight;
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// FORM SUBMISSION
+// Submit form
 document.getElementById("aiForm").addEventListener("submit", async e=>{
   e.preventDefault();
   const user = auth.currentUser;
@@ -156,15 +161,15 @@ document.getElementById("aiForm").addEventListener("submit", async e=>{
     user_id: user.uid
   };
 
-  addChatMessage("user", `Submitted: ${payload.topic}`);
-  addChatMessage("ai","Generating your content...");
+  addChatMessage("user",`Submitted: ${payload.topic}`);
+  addChatMessage("ai","Generating content...");
 
-  // Auto-send to Zapier
+  // Zapier webhook
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
     method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)
   });
 
-  // FREE AI IMAGE GENERATION (Craiyon)
+  // Free AI image generation (Craiyon)
   if(payload.generate_image==="Yes"){
     imageContainer.innerHTML="";
     for(let i=0;i<parseInt(payload.image_count);i++){
@@ -175,39 +180,45 @@ document.getElementById("aiForm").addEventListener("submit", async e=>{
   }
 });
 
-// FETCH SHEET DATA
-const sheetURL="https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json";
-async function fetchSheetData(){
-  try{const res=await fetch(sheetURL); const data=await res.json();
-    return data.feed.entry.map(item=>({topic:item.gsx$topic.$t,video_type:item.gsx$videotype.$t,tone:item.gsx$tone.$t,script:item.gsx$script?.$t||"",voiceover:item.gsx$voiceoverscript?.$t||"",thumbnail:item.gsx$thumbnail?.$t||"",image_prompt:item.gsx$imageprompt?.$t||"",user_id:item.gsx$userid.$t}));}
-  catch(e){console.error(e); return [];}
-}
-
-// UPDATE SHEET
-function updateSheet(field,value){
+// Update field (send to Zapier)
+function updateField(key,value){
   const user = auth.currentUser;
   if(!user) return;
   fetch("https://hooks.zapier.com/hooks/catch/26044546/ugc49fb/",{
-    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.uid, field, value})
+    method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.uid,key,value})
   });
 }
 
-// AUTO-REFRESH CHAT
+// Auto-refresh chat every 10s
 setInterval(async()=>{
   const user = auth.currentUser;
   if(!user) return;
-  const allData = await fetchSheetData();
-  const userData = allData.find(d=>d.user_id===user.uid);
+  // Fetch latest data
+  const res = await fetch("https://spreadsheets.google.com/feeds/list/2PACX-1vS9GDPobHDyoNMlFaY2_sXsBUYLoFtugV337QnsZ1_peM1AzNYZc5-dcKsl8OZ4y8Zh0afqdnYgbV1T/od6/public/values?alt=json");
+  const data = await res.json();
+  const entries = data.feed.entry.map(item=>({
+    topic:item.gsx$topic.$t,
+    video_type:item.gsx$videotype.$t,
+    tone:item.gsx$tone.$t,
+    script:item.gsx$script?.$t||"",
+    voiceover:item.gsx$voiceoverscript?.$t||"",
+    thumbnail:item.gsx$thumbnail?.$t||"",
+    image_prompt:item.gsx$imageprompt?.$t||"",
+    user_id:item.gsx$userid.$t
+  }));
+  const userData = entries.find(d=>d.user_id===user.uid);
   if(userData){
     chatBox.innerHTML="";
-    addChatMessage("ai",`Title: ${userData.topic}`,true,"topic");
-    addChatMessage("ai",`Description: ${userData.tone}`,true,"tone");
+    addChatMessage("ai",`Topic: ${userData.topic}`,true,"topic");
+    addChatMessage("ai",`Video Type: ${userData.video_type}`,true,"video_type");
+    addChatMessage("ai",`Tone: ${userData.tone}`,true,"tone");
     addChatMessage("ai",`Script: ${userData.script}`,true,"script");
     addChatMessage("ai",`Voiceover: ${userData.voiceover}`,true,"voiceover");
     addChatMessage("ai",`Thumbnail Prompt: ${userData.thumbnail}`,true,"thumbnail");
     addChatMessage("ai",`Image Prompt: ${userData.image_prompt}`,true,"image_prompt");
   }
 },10000);
+
 </script>
 </body>
 </html>
